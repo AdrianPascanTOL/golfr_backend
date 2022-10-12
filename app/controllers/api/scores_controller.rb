@@ -15,6 +15,17 @@ module Api
       render json: response.to_json
     end
 
+    def user_scores
+      scores = current_user.scores.order(played_at: :desc)
+      serialized_scores = scores.map(&:serialize)
+
+      response = {
+        scores: serialized_scores,
+      }
+
+      render json: response.to_json
+    end
+
     def create
       score = current_user.scores.build(score_params)
 

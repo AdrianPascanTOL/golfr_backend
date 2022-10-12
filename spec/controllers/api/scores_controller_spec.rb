@@ -28,6 +28,22 @@ describe Api::ScoresController, type: :request do
     end
   end
 
+  describe 'GET user/scores' do
+    it 'should return the signed in user scores' do
+      get api_user_scores_path
+
+      expect(response).to have_http_status(:ok)
+      response_hash = JSON.parse(response.body)
+      scores = response_hash['scores']
+
+      expect(scores.size).to eq 1
+      expect(scores[0]['user_name']).to eq @user1.name
+      expect(scores[0]['user_id']).to eq @user1.id
+      expect(scores[0]['total_score']).to eq @score1.total_score
+      expect(scores[0]['played_at']).to eq @score1.played_at.strftime('%Y-%m-%d')
+    end
+  end
+
   describe 'POST create' do
     it 'should save and return the new score if valid parameters' do
       score_count = Score.count
