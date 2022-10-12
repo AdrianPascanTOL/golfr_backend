@@ -3,12 +3,12 @@ require 'rails_helper'
 describe Api::ScoresController, type: :request do
   before :each do
     @user1 = create(:user, name: 'User1', email: 'user1@email.com', password: 'userpass')
-    user2 = create(:user, name: 'User2', email: 'user2@email.com', password: 'userpass')
+    @user2 = create(:user, name: 'User2', email: 'user2@email.com', password: 'userpass')
     sign_in(@user1, scope: :user)
 
     @score1 = create(:score, user: @user1, total_score: 79, played_at: '2021-05-20')
-    @score2 = create(:score, user: user2, total_score: 99, played_at: '2021-06-20')
-    @score3 = create(:score, user: user2, total_score: 68, played_at: '2021-06-13')
+    @score2 = create(:score, user: @user2, total_score: 99, played_at: '2021-06-20')
+    @score3 = create(:score, user: @user2, total_score: 68, played_at: '2021-06-13')
   end
 
   describe 'GET feed' do
@@ -25,6 +25,26 @@ describe Api::ScoresController, type: :request do
       expect(scores[0]['played_at']).to eq '2021-06-20'
       expect(scores[1]['total_score']).to eq 68
       expect(scores[2]['total_score']).to eq 79
+    end
+
+    it 'should return last 25 scores' do
+      today = Time.zone.now.strftime('%Y-%m-%d')
+      25.times do
+        create(:score, user: @user2, total_score: rand(54..120), played_at: today)
+      end
+
+      get api_feed_path
+
+      expect(response).to have_http_status(:ok)
+      response_hash = JSON.parse(response.body)
+      scores = response_hash['scores']
+
+      expect(scores.size).to eq 25
+      scores.each do |score|
+        expect(score['played_at']).to eq today
+        expect(score['user_id']).to eq @user2.id
+        expect(score['user_name']).to eq @user2.name
+      end
     end
   end
 
